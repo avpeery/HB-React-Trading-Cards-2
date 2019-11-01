@@ -31,6 +31,69 @@ class TradingCard extends React.Component {
   }
 }
 
+
+class TradingCardForm extends React.Component {
+  constructor() {
+    super()
+
+    this.state = {
+      name: '',
+      skill: ''
+    };
+
+    this.handleNameChange = this.handleNameChange.bind(this);
+    this.handleSkillChange = this.handleSkillChange.bind(this);
+    this.addNewCard = this.addNewCard.bind(this);
+    this.updateCards = this.updateCards.bind(this);
+  }
+
+  addNewCard() {
+    // FIXME
+    const formData = {
+        skill: this.state.skill,
+        name: this.state.name
+      };
+    $.post('/add-card', formData, this.updateCards);
+  }
+
+  updateCards() {
+    $.get('/cards.json', this.props.handleNewCardAdded);
+    alert('Added a new Card.');
+  }
+
+  handleNameChange(e) {
+    this.setState({ name: e.target.value });
+  }
+
+  handleSkillChange(e) {
+    this.setState({ skill: e.target.value });
+  }
+
+  render() {
+    return (
+      <form>
+        <label for="name">Name:</label>
+        <input
+          id="name"
+          type="text"
+          value={this.state.name}
+          onChange={this.handleNameChange}
+        />
+
+        <label for="skill">Skill:</label>
+        <input
+          id="skill"
+          type="text"
+          value={this.state.skill}
+          onChange={this.handleSkillChange}
+        />
+
+        <button onClick={this.addNewCard}>Add</button>
+      </form>
+    );
+  }
+}
+
 class TradingCardContainer extends React.Component {
   constructor(){
       super();
@@ -38,13 +101,29 @@ class TradingCardContainer extends React.Component {
         tradingCardData: [],
         isLoaded: false
       };
+    this.updateCards = this.updateCards.bind(this);
   }
+
+  updateCards(response) {
+    const cards = response.cards;
+    this.setState({ tradingCardData: cards , isLoaded: true});
+  }
+
+  getCardData() {
+    $.get('/cards.json', this.updateCards);
+  }
+
   componentDidMount() {
-  $.get('/cards.json', (result) => {
-  this.setState({tradingCardData: result.cards,
-                 isLoaded: true})
-    });
+    this.getCardData();
   }
+
+  // componentDidMount() {
+  // $.get('/cards.json', (result) => {
+  // this.setState({tradingCardData: result.cards,
+  //                isLoaded: true})
+  //   });
+  // }
+
   render() {
     const tradingCards = [];
     for (const currentCard of this.state.tradingCardData) {
@@ -58,7 +137,9 @@ class TradingCardContainer extends React.Component {
       );
     }
     if (this.state.isLoaded){
-      return <div>{tradingCards}</div>;
+      return <div><TradingCardForm handleNewCardAdded={this.updateCards}/>
+             <div>{tradingCards}</div>
+             </div>;
     }
     else{
       return <p>Loading...</p>;
